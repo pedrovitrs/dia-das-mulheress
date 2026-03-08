@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pote de Estrelas - Um Refúgio para Você</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Quicksand:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #0f172a;
+            --bg-glow: #1e1b4b;
+            --gold: #fbbf24;
+            --silver: #e2e8f0;
+            --shooting: #f472b6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: var(--bg-deep);
+            font-family: 'Quicksand', sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        .font-handwriting {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        /* Animação do Envelope */
+        .envelope-wrapper {
+            perspective: 1000px;
+            transition: opacity 1s ease-in-out, transform 1s ease-in-out;
+        }
+
+        .envelope {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            background: #fdf4ff;
+            border-radius: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        .envelope::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid #fae8ff;
+            z-index: 2;
+            transition: transform 0.5s ease-in-out;
+            transform-origin: top;
+        }
+
+        .envelope.open::before {
+            transform: rotateX(180deg);
+            z-index: 0;
+        }
+
+        .envelope .letter {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            background: white;
+            padding: 20px;
+            color: #4c1d95;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: transform 0.5s ease-in-out;
+            z-index: 1;
+        }
+
+        .envelope.open .letter {
+            transform: translateY(-50px);
+        }
+
+        /* Cenário do Pote */
+        #night-sky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #2e1065, #0f172a);
+            opacity: 0;
+            transition: opacity 2s ease;
+            pointer-events: none;
+        }
+
+        #night-sky.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .jar-container {
+            position: relative;
+            width: 280px;
+            height: 400px;
+            margin: auto;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .jar {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40% 40% 20% 20% / 10% 10% 10% 10%;
+            box-shadow: 0 0 40px rgba(255,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.1);
+            z-index: 10;
+        }
+
+        .jar-lid {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%;
+            height: 30px;
+            background: #4a5568;
+            border-radius: 5px;
+            z-index: 11;
+        }
+
+        /* Estrelas */
+        .star {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            z-index: 20;
+            filter: drop-shadow(0 0 5px currentColor);
+            animation: float 4s infinite ease-in-out;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .star:hover {
+            transform: scale(1.5) !important;
+            filter: drop-shadow(0 0 15px currentColor);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+            50% { transform: translate(10px, -20px); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        /* Modal da Mensagem */
+        #message-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 85%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            color: #1e1b4b;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+        }
+
+        #message-card.active {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 90;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Estilo da Regra */
+        .app-rule {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.6);
+            max-width: 250px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Tela Inicial: Envelope -->
+    <div id="initial-screen" class="fixed inset-0 flex flex-col items-center justify-center z-50 transition-opacity duration-1000">
+        <div class="envelope-wrapper" id="envelope-trigger">
+            <div class="envelope" id="main-envelope">
+                <div class="letter font-handwriting">
+                    Fiz um lugar para guardar um pouquinho da luz que você traz para o mundo.<br><br>
+                    Feliz Dia da Mulher.
+                </div>
+            </div>
+            <p class="mt-8 text-white/70 animate-bounce text-center">Para você... <br> (Toque no envelope)</p>
+        </div>
+    </div>
+
+    <!-- Cenário Principal -->
+    <div id="night-sky">
+        <div class="jar-container">
+            <div class="jar-lid"></div>
+            <div class="jar" id="star-jar"></div>
+        </div>
+
+        <div class="absolute top-10 w-full text-center px-6">
+            <h1 class="font-handwriting text-4xl text-white/90">Seu Pote de Luz</h1>
+            <p class="text-white/50 text-sm mt-2">Toque em uma estrela para receber carinho.</p>
+        </div>
+
+        <div class="app-rule font-handwriting">
+            "Tire quantas estrelas precisar hoje. O pote nunca esvazia, assim como o orgulho que tenho de você."
+        </div>
+    </div>
+
+    <!-- Overlay e Card de Mensagem -->
+    <div class="overlay" id="overlay"></div>
+    <div id="message-card">
+        <div id="message-icon" class="text-4xl mb-4">✨</div>
+        <p id="message-text" class="text-xl leading-relaxed font-medium mb-6"></p>
+        <button onclick="closeMessage()" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-indigo-700 transition">Guardar no coração</button>
+    </div>
+
+    <!-- Áudio (Web Audio API fallback para não depender de arquivos externos) -->
+    <script>
+        const messages = {
+            gold: [
+                "Você é a definição de resiliência e graça. Nada pode apagar seu brilho.",
+                "Sua inteligência ilumina qualquer conversa e abre caminhos incríveis.",
+                "A forma como você lida com os desafios mostra a força gigante que você tem.",
+                "Sua presença torna o mundo um lugar mais bonito e suportável.",
+                "Você é capaz de realizar tudo aquilo que seu coração sonha.",
+                "Nunca subestime o impacto positivo que você causa nas pessoas ao seu redor.",
+                "O seu brilho é único e ninguém no mundo pode substituí-lo.",
+                "Você tem uma sabedoria que acalma e uma força que inspira.",
+                "A sua coragem de ser quem você é é o seu maior superpoder.",
+                "Você transforma o cansaço em conquista com uma elegância admirável.",
+                "Sua bondade não é fraqueza, é a força mais pura que conheço.",
+                "Você merece todas as coisas boas que o universo tem para oferecer."
+            ],
+            silver: [
+                "Lembre-se de ser tão gentil com você mesma quanto você é com os outros.",
+                "Tudo bem descansar hoje. Você já fez muito e merece esse respiro.",
+                "Não se cobre tanto. Você está evoluindo no seu próprio tempo, e isso é lindo.",
+                "Respire fundo. Esse momento difícil vai passar, e você continuará aqui, forte.",
+                "O autocuidado não é egoísmo, é necessário para manter sua luz acesa.",
+                "Sua paz vale mais do que qualquer produtividade.",
+                "Você não precisa carregar o mundo inteiro nas costas hoje.",
+                "A perfeição é uma ilusão; a sua autenticidade é o que realmente importa.",
+                "Dê a si mesma o crédito por ter chegado até aqui.",
+                "O seu valor não depende do quanto você fez hoje, mas de quem você é.",
+                "Ouça o silêncio e permita-se apenas ser, sem pressa.",
+                "Cada pequeno passo na direção da sua paz é uma grande vitória."
+            ],
+            shooting: [
+                "Amo a maneira como você ri das pequenas coisas da vida.",
+                "Lembro do seu brilho nos olhos quando você fala sobre o que ama fazer.",
+                "Sua coragem de ser quem você é me inspira todos os dias.",
+                "Os detalhes da sua alma são o que te tornam única no universo.",
+                "Você tem um jeito especial de transformar dias comuns em memórias doces.",
+                "A sua força silenciosa é uma das coisas que mais admiro em você.",
+                "O mundo fica mais colorido quando você compartilha sua visão sobre ele.",
+                "Admiro a forma como você cuida das pessoas com tanto zelo.",
+                "Você é uma combinação rara de inteligência, beleza e coração.",
+                "O seu sorriso tem o poder de mudar o rumo do meu dia.",
+                "Gosto de como você encara a vida com esperança, mesmo nos dias nublados.",
+                "Você é o detalhe mais bonito em qualquer lugar que esteja."
+            ]
+        };
+
+        const jar = document.getElementById('star-jar');
+        const envelope = document.getElementById('main-envelope');
+        const envelopeTrigger = document.getElementById('envelope-trigger');
+        const initialScreen = document.getElementById('initial-screen');
+        const nightSky = document.getElementById('night-sky');
+        const messageCard = document.getElementById('message-card');
+        const overlay = document.getElementById('overlay');
+        const messageText = document.getElementById('message-text');
+        const messageIcon = document.getElementById('message-icon');
+
+        // Sons com Web Audio API
+        function playChime() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.5);
+            
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.5);
+        }
+
+        // Abrir Envelope
+        envelopeTrigger.addEventListener('click', () => {
+            envelope.classList.add('open');
+            playChime();
+            
+            setTimeout(() => {
+                initialScreen.style.opacity = '0';
+                nightSky.classList.add('active');
+                setTimeout(() => {
+                    initialScreen.style.display = 'none';
+                    generateStars();
+                }, 1000);
+            }, 2500);
+        });
+
+        // Gerar Estrelas
+        function generateStars() {
+            const types = ['gold', 'silver', 'shooting'];
+            for (let i = 0; i < 40; i++) { // Aumentado para 40 para preencher melhor com as novas frases
+                const type = types[Math.floor(Math.random() * types.length)];
+                createStar(type);
+            }
+        }
+
+        function createStar(type) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            
+            // Cores conforme categoria
+            let color = '';
+            if (type === 'gold') color = '#fbbf24';
+            else if (type === 'silver') color = '#e2e8f0';
+            else color = '#f472b6';
+            
+            star.style.color = color;
+            star.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+            `;
+
+            // Posição aleatória dentro do pote
+            const x = Math.random() * 80 + 10;
+            const y = Math.random() * 80 + 10;
+            const delay = Math.random() * 5;
+            const duration = 3 + Math.random() * 4;
+
+            star.style.left = `${x}%`;
+            star.style.top = `${y}%`;
+            star.style.animationDelay = `${delay}s`;
+            star.style.animationDuration = `${duration}s`;
+            star.style.transform = `scale(${0.5 + Math.random()})`;
+
+            star.addEventListener('click', () => showMessage(type));
+            jar.appendChild(star);
+        }
+
+        function showMessage(type) {
+            playChime();
+            const typeMessages = messages[type];
+            const text = typeMessages[Math.floor(Math.random() * typeMessages.length)];
+            
+            messageText.innerText = text;
+            
+            if (type === 'gold') {
+                messageIcon.innerText = '🌟';
+                messageCard.style.borderTop = '8px solid #fbbf24';
+            } else if (type === 'silver') {
+                messageIcon.innerText = '✨';
+                messageCard.style.borderTop = '8px solid #cbd5e1';
+            } else {
+                messageIcon.innerText = '💫';
+                messageCard.style.borderTop = '8px solid #f472b6';
+            }
+
+            overlay.classList.add('active');
+            messageCard.classList.add('active');
+        }
+
+        function closeMessage() {
+            overlay.classList.remove('active');
+            messageCard.classList.remove('active');
+        }
+
+        // Criar estrelas de fundo (cenário)
+        function createBackgroundStars() {
+            for (let i = 0; i < 50; i++) {
+                const bStar = document.createElement('div');
+                bStar.style.position = 'absolute';
+                bStar.style.width = '2px';
+                bStar.style.height = '2px';
+                bStar.style.background = 'white';
+                bStar.style.borderRadius = '50%';
+                bStar.style.left = Math.random() * 100 + 'vw';
+                bStar.style.top = Math.random() * 100 + 'vh';
+                bStar.style.opacity = Math.random();
+                bStar.style.animation = `pulse ${2 + Math.random() * 3}s infinite`;
+                document.getElementById('night-sky').appendChild(bStar);
+            }
+        }
+
+        window.onload = createBackgroundStars;
+    </script>
+</body>
+</html>
